@@ -1,0 +1,11 @@
+Package: cjpowR
+Type: Package
+Title: A Priori Power Analyses for Conjoint Experiments
+Version: 0.1.0
+Author: Markus Freitag, Julian Schuessler
+Maintainer: The package maintainer <markus.freitag@campus.lmu.de>
+Description:
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
