@@ -2,7 +2,6 @@
 
 <h1 align="center">A Priori Power Analyses for Conjoint Experiments</h1>
 
-[![Github All Releases](https://img.shields.io/github/downloads/m-freitag/cjpowR/total.svg)]()
 
 Based on [Schuessler/Freitag (2020)](), this R package provides simple
 functions to calculate power, minimum required sample size, Type S and the expected Type M error for forced-choice conjoint experiments.
