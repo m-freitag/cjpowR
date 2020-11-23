@@ -20,7 +20,7 @@ library(devtools)
 devtools::install_github("m-freitag/cjpowR")
 ```
 
-## Functionality
+## Usage
 
 In its current development version, the package consists of three functions. `cjpowr_amce()` and `cjpowr_amcie()` return a `data.frame`-object holding, depending on the user inputs, the calculated minimum required sample size or power along with the Type S and the expected Type M Error. 
 For convenience, if a sample size is provided, power is calculated, whereas if power is provided, the minimum required sample size is put out. 
