@@ -1,4 +1,4 @@
-<p align="center"><img src="cjpowR_hex.png" width="200"></p>
+<p align="center"><img src="cjpowR_hex.png" width="250"></p>
 
 <h1 align="center">A Priori Power Analyses for Conjoint Experiments</h1>
 
