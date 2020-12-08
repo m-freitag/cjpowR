@@ -24,9 +24,9 @@ devtools::install_github("m-freitag/cjpowR")
 
 In its current development version, the package consists of three functions. `cjpowr_amce()` and `cjpowr_amcie()` return a `data.frame`-object holding, depending on the user inputs, the calculated minimum required sample size or power along with the Type S and the expected Type M Error. 
 For convenience, if a sample size is provided, power is calculated, whereas if power is provided, the minimum required sample size is put out. 
-Further, the effect size, the number of levels, the alpha-level and, especially in the case of differences in conditional AMCEs, the treatment probabilities have to be provided. 
+Further, the effect size, the number of levels, the alpha-level and, especially in the case of differences in conditional AMCEs, the treatment probabilities have to be provided. `cjpowr_plotly` provides a convenience function for interactive plotting.
 
-For instance, 
+## Examples
 
 ```{r}
 library(cjpowR)
