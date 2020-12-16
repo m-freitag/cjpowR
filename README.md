@@ -8,7 +8,7 @@ functions to calculate power, minimum required sample size, Type S and the expec
 
 #### Cite as:
 
-Freitag, M. and J. Schuessler(2020): “cjpowR – A Priori Power Analyses for Conjoint Experiments,” R-Package. 
+Freitag, M. and J. Schuessler(2020): “cjpowR – A Priori Power Analyses for Conjoint Experiments,” R Package. 
 
 ## Installation
 
