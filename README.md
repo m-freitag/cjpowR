@@ -22,11 +22,11 @@ devtools::install_github("m-freitag/cjpowR")
 
 ## Usage
 
-In its current development version, the package consists of three functions. `cjpowr_amce()` and `cjpowr_amcie()` return a `data.frame`-object holding, depending on the user inputs, the calculated minimum required **effective**[^1] sample size or power along with the Type S and the expected Type M Error. 
+In its current development version, the package consists of three functions. `cjpowr_amce()` and `cjpowr_amcie()` return a `data.frame`-object holding, depending on the user inputs, the calculated minimum required **effective**<sup>1</sup> sample size or power along with the Type S and the expected Type M Error. 
 For convenience, if an effective sample size is provided, power is calculated, whereas if power is provided, the minimum required effective sample size is put out. 
 Further, the effect size, the number of levels, the alpha-level and, especially in the case of differences in conditional AMCEs, the treatment probabilities have to be provided. `cjpowr_plotly` provides a convenience function for interactive plotting.
 
-[^1] Effective sample size := the number of respondents * the number of individually assessed profiles * the number of tasks.
+<sup>1</sup> Effective sample size := the number of respondents * the number of individually assessed profiles * the number of tasks.
 
 ## Examples
 
