@@ -26,7 +26,7 @@ In its current development version, the package consists of three functions. `cj
 For convenience, if an effective sample size is provided, power is calculated, whereas if power is provided, the minimum required effective sample size is put out. 
 Further, the effect size, the number of levels, the alpha-level and, especially in the case of differences in conditional AMCEs, the treatment probabilities have to be provided. `cjpowr_plotly` provides a convenience function for interactive plotting.
 
-<sup>1</sup> Effective sample size := the number of respondents * the number of individually assessed profiles * the number of tasks.
+<sup>1</sup>Effective sample size := the number of respondents * the number of individually assessed profiles * the number of tasks.
 
 ## Examples
 
