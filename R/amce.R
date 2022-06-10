@@ -16,18 +16,14 @@
 #' not completely underpowered, you do not need to worry about type S error. However, only high powered
 #' studies result in low E(type M erorrs).
 #'
-#' For convenient interactive visual assessments of basic design parameters
-#' \link[cjpowR]{cjpowr_plotly} is available. To calculate power for conditional AMCEs or interaction effects,
+#' To calculate power for conditional AMCEs or interaction effects,
 #' users are referred to \link[cjpowR]{cjpowr_amcie}.
-#' @import plyr
-#' @import plotly
-#' @import tidyverse
 #' @param amce of a user-specified size.
 #' @param alpha the significance level, 0.05 by default.
 #' @param power power of the test (1 minus Type II error probability), default is NULL.
 #' @param levels the number of levels of the treatment.
 #' @param n effective sample size, default is NULL.
-#' @param delta0 probability to choose a profile with the treatment set to 0 (reference level)
+#' @param treat.prob default is 0.5.
 #' @param sims number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.
 #' @keywords conjoint, power analysis, AMCE
 #' @export
@@ -43,16 +39,27 @@
 #' df$n/(2*4)
 #'
 #' #This gives the power (type S, E(type M)):
-#' cjpowr_amce(amce = 0.05, n = 7809.635, levels = 5)
+#' cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 #'
 #' #Generating an interactive plot for type M error:
 #'
+#' d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
+#'
+#' # Purrr Style:
+#' library(purrr)
+#' set.seed(123)
+#' df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
+#'
+#' # Base R:
+#' set.seed(123)
 #' cjpowr_amce_vec <- Vectorize(cjpowr_amce)
-#' d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05),n = seq(from = 100, to = 50000, length.out = 1000))
-#' df <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 100000, levels = 5, alpha = 0.05, delta0 = 0.5))
-#' df <- data.frame(df)
-#' df[] <- lapply(df, unlist)
-
+#' df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
+#'
+#' df2 <- data.frame(df2)
+#' df2[] <- lapply(df2, unlist)
+#'
+#' library(plotly)
+#' 
 #' plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) %>%
 #'  layout(
 #'    xaxis = list(title = "Effective Sample Size",
@@ -74,7 +81,7 @@
 #'    British Journal of Mathematical and Statistical Psychology 72(1), 1–17.
 
 cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
-                        delta0 = 0.5, n = NULL, sims = 100000){
+                        treat.prob = 0.5, n = NULL, sims = 100000){
 
   if (sum(sapply(list(power,n), is.null)) != 1)
     stop("either 'n' or 'power' must be provided")
@@ -84,6 +91,12 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
   if (is.null(sims)) {
 
     if (is.null(n)) {
+
+      if (all(sapply(list(length(amce), length(alpha), length(power), length(levels)), function(x) x == 1)) == FALSE) {
+        stop("Please provide scalar values or apply a functional.")
+      }
+
+      delta0 = 0.5 - (amce*treat.prob)
 
       n = (levels/2)/(amce^2) * (qnorm(p = 1- alpha/2) + qnorm(p = power))^2*
         (
@@ -107,6 +120,12 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     else if (is.null(power)) {
 
+      if (all(sapply(list(length(amce), length(alpha), length(n), length(levels)), function(x) x == 1)) == FALSE) {
+        stop("Please provide scalar values or apply a functional.")
+      }
+
+      delta0 = 0.5 - (amce * treat.prob)
+
       se = (sqrt( (
         ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
           ((delta0)*(1 - delta0))/0.5
@@ -122,6 +141,12 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
     }
   }
   else if (is.null(n)) {
+
+    if (all(sapply(list(length(amce), length(alpha), length(power), length(levels)), function(x) x == 1)) == FALSE) {
+      stop("Please provide scalar values or apply a functional.")
+    }
+
+    delta0 = 0.5 - (amce * treat.prob)
 
     n = (levels/2)/(amce^2) * (qnorm(p = 1- alpha/2) + qnorm(p = power))^2*
       (
@@ -151,6 +176,12 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
   }
 
   else if (is.null(power)){
+
+    if (all(sapply(list(length(amce), length(alpha), length(n), length(levels)), function(x) x == 1)) == FALSE) {
+      stop("Please provide scalar values or apply a functional.")
+    }
+    
+    delta0 = 0.5 - (amce * treat.prob)
 
     se = (sqrt( (
       ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
