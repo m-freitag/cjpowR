@@ -42,19 +42,15 @@ df$n/(2*4)
 cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 
 #Generating an interactive plot for type M error:
-d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
+d <- expand.grid(
+    amce = c(0.01, 0.02, 0.03, 0.05), 
+    n = seq(from = 100, to = 50000, 
+    length.out = 1000), 
+    alpha = 0.05, levels = 2,
+    treat.prob = 0.5, 
+    sims = 100000)
 
-# Purrr Style:
-library(purrr)
-set.seed(123)
-df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
-
-# Base R:
-set.seed(123)
-cjpowr_amce_vec <- Vectorize(cjpowr_amce)
-df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
-df2 <- data.frame(df2)
-df2[] <- lapply(df2, unlist)
+df <- list2DF(do.call(cjpowr_amce, d))
 
 library(plotly)
 plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) %>%
