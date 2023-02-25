@@ -39,20 +39,25 @@ gives the minimum required effective sample size as well as the Type S Error and
 For example, an [interactive exaggeration curve](https://rawgit.com/m-freitag/cjpowR/master/Type\%20M.html) for a 3x4 level AMCIE can be easily generated using:
 
 ```{r}
-# Due to the iterative calculation, vectorizing the functions is 
-# recommended when calculating curves only for the exaggeration ratio
-# given other parameters. The number of iteration steps can be
-# decreased using the "sims" parameter.
+# Due to the iterative calculation, using more complex functionals is necessary only for 
+# calculating the exaggeration ratio given other parameters. The number of iteration 
+# steps can be decreased using the "sims" parameter.
 
-cjpowr_amcie_vec <- Vectorize(cjpowr_amcie)
 
-d <- expand.grid(delta3 = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
+d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
 
-df <- t(cjpowr_amcie_vec(delta3 = d$delta3, n = d$n, sims = 10000, levels1 = 3, levels2=4, alpha = 0.05, delta0 = 0.5))
+# Purrr Style:
+library(purrr)
+set.seed(123)
+df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 100000, levels = 5, alpha = 0.05))
 
-df <- data.frame(df)
+# Base R:
+# set.seed(123)
+# cjpowr_amce_vec <- Vectorize(cjpowr_amce)
+# df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 100000, levels = 5, alpha = 0.05))
 
-df[] <- lapply(df, unlist)
+# df2 <- data.frame(df2)
+# df2[] <- lapply(df2, unlist)
 
 # Interactive plot
 library(plotly)
@@ -71,5 +76,3 @@ plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype =
  )
 
 ```
-
- To facilitate plotting and inspection, `cjpowr_plotly` provides a convenience function to create interactive power curves. For more information, readers are referred to the package documentation.

@@ -5,23 +5,22 @@
 \title{Calculate Power or Minimum Required Sample Size for AMCIEs/Conditional AMCEs in Conjoint Experiments}
 \usage{
 cjpowr_amcie(
+  delta0 = 0.5,
   delta1 = 0,
-  delta2 = 0,
   delta3,
   alpha = 0.05,
   power = NULL,
   n = NULL,
   levels1 = 2,
   levels2 = 2,
-  treat.prob = c(0.25, 0.25, 0.25, 0.25),
-  sims = 1e+05,
-  delta0 = 0.5
+  treat.prob = list(p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25),
+  sims = 1e+05
 )
 }
 \arguments{
-\item{delta1}{default is 0 and a conservative choice.}
+\item{delta0}{default is 0.5.}
 
-\item{delta2}{default is 0 and a conservative choice.}
+\item{delta1}{default is 0.}
 
 \item{delta3}{amcie or conditional amce of user specified size.}
 
@@ -35,11 +34,9 @@ cjpowr_amcie(
 
 \item{levels2}{the number of levels of the second treatment/subgroup variable. Default is 2.}
 
-\item{treat.prob}{if the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25. Thus, the default is c(0.25,0.25,0.25,0.25)}
+\item{treat.prob}{List of treatment probabilities. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25. Thus, the default is list(0.25,0.25,0.25,0.25)}
 
 \item{sims}{number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.}
-
-\item{delta0}{default is 0.5.}
 }
 \description{
 Based on Schuessler/Freitag (2020), this function calculates the minimum effective
@@ -55,7 +52,8 @@ resource constraints. The number of attributes does not affect power.
 
 To calculate power or minimum sample size for differences in conditional AMCEs, given the known or estimated marginal distribution of the pre-treatment co-variate,
 the argument "treat.prob" can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
-binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following vector of probabilities: c(0.1,0.1,0.4,0.4). Details on the formula can be found in Schuessler/Freitag 2020.
+binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following list of probabilities: list(0.1,0.1,0.4,0.4). Details on the formula can be found in Schuessler/Freitag 2020.
+Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lowe power (see the technical Appendix of the paper).
 
 Passing the effective sample size to the function gives power.
 Type S (incorrect sign)and the expected type M errors (exaggeration ratio) are also computed (Lu/Qui/Deng 2019). If your study is
@@ -76,32 +74,13 @@ Power for AMCEs can be calculated with \link[cjpowR]{cjpowr_amce}.
 
 \examples{
 
-cjpowr_amcie(delta1 = 0, delta2 = 0, delta3 = 0.05, levels1=3, levels2=3, power=0.8)
-
-# Plotting minimum required sample size for AMCIEs:
-
-power <- expand.grid(power=c(0.7,0.8,0.9))
-d <- plyr::mdply(power, cjpowr_amcie,
-                delta3 = seq(from = 0.02, to = 0.1, length.out = 1000),
-                delta2 = 0,
-                delta1 = 0,
-                alpha = 0.05,
-                levels1 = 3,
-                levels2 = 2,
-                delta0=0.5, sims = NULL)
-plot_ly(d, x = ~delta3, y = ~n, type = 'scatter', mode = 'lines', linetype = ~power) \%>\%
- layout(
-   xaxis = list(title = "AMCIE", zeroline = F, hoverformat = '.4f'),
-   yaxis = list(title = "Minimum Effective Sample Size", zeroline = F, hoverformat = '.2f'),
-   legend=list(title=list(text='<b> Power </b>')),
-   hovermode = "x unified"
- )
+cjpowr_amcie(delta3 = 0.05, levels1=3, levels2=3, power=0.8)
 
 #Generating an interactive plot for type M error:
 
 cjpowr_amcie_vec <- Vectorize(cjpowr_amcie)
 d <- expand.grid(delta3 = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
-df <- t(cjpowr_amcie_vec(delta3 = d$delta3, n = d$n, sims = 10000, levels1 = 3, levels2=4, alpha = 0.05, delta0 = 0.5))
+df <- t(cjpowr_amcie_vec(delta3 = d$delta3, n = d$n, sims = 10000, levels1 = 3, levels2=4, alpha = 0.05))
 df <- data.frame(df)
 df[] <- lapply(df, unlist)
 plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~delta3) \%>\%

@@ -2,7 +2,3 @@
 
 export(cjpowr_amce)
 export(cjpowr_amcie)
-export(cjpowr_plotly)
-import(plotly)
-import(plyr)
-import(tidyverse)

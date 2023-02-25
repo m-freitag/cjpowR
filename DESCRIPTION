@@ -1,14 +1,10 @@
 Package: cjpowR
 Type: Package
 Title: A Priori Power Analyses for Conjoint Experiments
-Version: 1.0.0
+Version: 1.0.1
 Author: Markus Freitag, Julian Schuessler
-Maintainer: Markus Freitag <markus.freitag@campus.lmu.de>
+Maintainer: Markus Freitag <freitagmarkus@outlook.de>
 Description: Implements the formulae provided by Schuessler/Freitag (2020) and provides some plotting functions.
-Imports:
-   plyr,
-   plotly,
-   tidyverse	
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true

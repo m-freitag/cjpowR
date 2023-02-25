@@ -9,7 +9,7 @@ cjpowr_amce(
   alpha = 0.05,
   power = NULL,
   levels = 2,
-  delta0 = 0.5,
+  treat.prob = 0.5,
   n = NULL,
   sims = 1e+05
 )
@@ -23,7 +23,7 @@ cjpowr_amce(
 
 \item{levels}{the number of levels of the treatment.}
 
-\item{delta0}{probability to choose a profile with the treatment set to 0 (reference level)}
+\item{treat.prob}{default is 0.5.}
 
 \item{n}{effective sample size, default is NULL.}
 
@@ -47,8 +47,7 @@ Type S (incorrect sign)and the expected type M errors (exaggeration ratio) are a
 not completely underpowered, you do not need to worry about type S error. However, only high powered
 studies result in low E(type M erorrs).
 
-For convenient interactive visual assessments of basic design parameters
-\link[cjpowR]{cjpowr_plotly} is available. To calculate power for conditional AMCEs or interaction effects,
+To calculate power for conditional AMCEs or interaction effects,
 users are referred to \link[cjpowR]{cjpowr_amcie}.
 }
 \section{Literature}{
@@ -70,15 +69,27 @@ df = cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
 df$n/(2*4)
 
 #This gives the power (type S, E(type M)):
-cjpowr_amce(amce = 0.05, n = 7809.635, levels = 5)
+cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 
 #Generating an interactive plot for type M error:
 
+d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
+
+# Purrr Style:
+library(purrr)
+set.seed(123)
+df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
+
+# Base R:
+set.seed(123)
 cjpowr_amce_vec <- Vectorize(cjpowr_amce)
-d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05),n = seq(from = 100, to = 50000, length.out = 1000))
-df <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 100000, levels = 5, alpha = 0.05, delta0 = 0.5))
-df <- data.frame(df)
-df[] <- lapply(df, unlist)
+df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
+
+df2 <- data.frame(df2)
+df2[] <- lapply(df2, unlist)
+
+library(plotly)
+
 plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) \%>\%
  layout(
    xaxis = list(title = "Effective Sample Size",
