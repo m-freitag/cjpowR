@@ -31,48 +31,42 @@ Further, the effect size, the number of levels, the alpha-level and, especially 
 ## Examples
 
 ```{r}
-library(cjpowR)
-cjpowr_amce(amce = 0.05, power = 0.8, levels = 5, alpha=0.05)
-```
-gives the minimum required effective sample size as well as the Type S Error and the exaggeration ratio given specified parameters. The functions can be manipulated to calculate the desired outputs for ranges of parameters (e.g. ranges of effect sizes). 
+# This gives the minimum required effective sample size (type S, E(type M)):
 
-For example, an [interactive exaggeration curve](https://rawgit.com/m-freitag/cjpowR/master/Type\%20M.html) for a 3x4 level AMCIE can be easily generated using:
+df = cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
 
-```{r}
-# Due to the iterative calculation, using more complex functionals is necessary only for 
-# calculating the exaggeration ratio given other parameters. The number of iteration 
-# steps can be decreased using the "sims" parameter.
+# For example, for a conjoint with 2 profiles and 4 tasks, n becomes:
+df$n/(2*4)
 
+#This gives the power (type S, E(type M)):
+cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 
+#Generating an interactive plot for type M error:
 d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
 
 # Purrr Style:
 library(purrr)
 set.seed(123)
-df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 100000, levels = 5, alpha = 0.05))
+df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
 
 # Base R:
-# set.seed(123)
-# cjpowr_amce_vec <- Vectorize(cjpowr_amce)
-# df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 100000, levels = 5, alpha = 0.05))
+set.seed(123)
+cjpowr_amce_vec <- Vectorize(cjpowr_amce)
+df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
+df2 <- data.frame(df2)
+df2[] <- lapply(df2, unlist)
 
-# df2 <- data.frame(df2)
-# df2[] <- lapply(df2, unlist)
-
-# Interactive plot
 library(plotly)
-
 plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) %>%
-  layout(
-    xaxis = list(title = "Effective Sample Size",
-                 zeroline = F,
-                 hoverformat = '.0f'),
-    yaxis = list(title = "Exaggeration Ratio",
-                 range = c(0,10),
-                 zeroline = F,
-                 hoverformat = '.2f'),
-    legend=list(title=list(text='<b> AMCE </b>')),
-    hovermode = "x unified"
-  )
-
+ layout(
+   xaxis = list(title = "Effective Sample Size",
+                zeroline = F,
+                hoverformat = '.0f'),
+   yaxis = list(title = "Exaggeration Ratio",
+                range = c(0,10),
+                zeroline = F,
+                hoverformat = '.2f'),
+   legend=list(title=list(text='<b> AMCE </b>')),
+   hovermode = "x unified"
+ )
 ```
