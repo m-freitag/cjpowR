@@ -13,7 +13,7 @@
 #' To calculate power or minimum sample size for differences in conditional AMCEs, given the known or estimated marginal distribution of the pre-treatment co-variate,
 #' the argument "treat.prob" can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
 #' binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following list of probabilities: list(0.1,0.1,0.4,0.4). Details on the formula can be found in Schuessler/Freitag 2020.
-#' Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lowe power (see the technical Appendix of the paper).
+#' Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lower power (see the technical Appendix of the paper).
 #'
 #' Passing the effective sample size to the function gives power.
 #' Type S (incorrect sign)and the expected type M errors (exaggeration ratio) are also computed (Lu/Qui/Deng 2019). If your study is
