@@ -88,13 +88,18 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
   if (!is.null(alpha) && !is.numeric(alpha) || any(0 > alpha | alpha > 1))
     stop("'sig.level' must be numeric in [0, 1]")
 
+  lengths <- c(length(amce), length(alpha), length(power), length(levels), length(treat.prob), length(n), length(sims))
+  non_null_lengths <- lengths[lengths > 0]
+  
+  if (length(unique(non_null_lengths)) > 1) {
+    stop("All non-NULL input parameters must be of the same length.")
+  }
+
+  length_output <- unique(non_null_lengths)
+
   if (is.null(sims)) {
 
     if (is.null(n)) {
-
-      if (all(sapply(list(length(amce), length(alpha), length(power), length(levels)), function(x) x == 1)) == FALSE) {
-        stop("Please provide scalar values or apply a functional.")
-      }
 
       delta0 = 0.5 - (amce*treat.prob)
 
@@ -120,10 +125,6 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     else if (is.null(power)) {
 
-      if (all(sapply(list(length(amce), length(alpha), length(n), length(levels)), function(x) x == 1)) == FALSE) {
-        stop("Please provide scalar values or apply a functional.")
-      }
-
       delta0 = 0.5 - (amce * treat.prob)
 
       se = (sqrt( (
@@ -141,10 +142,6 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
     }
   }
   else if (is.null(n)) {
-
-    if (all(sapply(list(length(amce), length(alpha), length(power), length(levels)), function(x) x == 1)) == FALSE) {
-      stop("Please provide scalar values or apply a functional.")
-    }
 
     delta0 = 0.5 - (amce * treat.prob)
 
@@ -165,11 +162,18 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     type_s = pnorm(-z-qnorm(1-alpha/2))/pow
 
-    est <-  amce + se*rnorm(sims)
+    exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sig <- abs(est) > se*qnorm(1-alpha/2)
+    sims <- rep(sims, length_output)
 
-    exp_typeM <- abs(mean(abs(est)[sig])/amce)
+    for (i in seq(1, length_output)) {
+
+    est <-  amce[i] + se[i]*rnorm(sims[i])
+
+    sig <- abs(est) > se[i]*qnorm(1-alpha/2)
+
+    exp_typeM[i] <- abs(mean(abs(est)[sig])/amce[i])
+    }
 
     return(data.frame(n=n, type_s=type_s, exp_typeM=exp_typeM, amce=amce, power=power, alpha = alpha, levels = levels, delta0 = delta0))
 
@@ -177,10 +181,6 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
   else if (is.null(power)){
 
-    if (all(sapply(list(length(amce), length(alpha), length(n), length(levels)), function(x) x == 1)) == FALSE) {
-      stop("Please provide scalar values or apply a functional.")
-    }
-    
     delta0 = 0.5 - (amce * treat.prob)
 
     se = (sqrt( (
@@ -194,11 +194,18 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     type_s = pnorm(-z-qnorm(1-alpha/2))/power
 
-    est <-  amce + se*rnorm(sims)
+    exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sig <- abs(est) > se*qnorm(1-alpha/2)
+    sims <- rep(sims, length_output)
 
-    exp_typeM <- abs(mean(abs(est)[sig])/amce)
+    for (i in seq(1, length_output)) {
+
+    est <-  amce[i] + se[i]*rnorm(sims[i])
+
+    sig <- abs(est) > se[i]*qnorm(1-alpha/2)
+
+    exp_typeM[i] <- abs(mean(abs(est)[sig])/amce[i])
+    }
 
     return(data.frame(power=power, type_s=type_s, exp_typeM=exp_typeM,  amce=amce, n=n, alpha = alpha, levels = levels, delta0 = delta0 ))
   }
