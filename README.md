@@ -62,17 +62,17 @@ df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 100000
 # Interactive plot
 library(plotly)
 
-plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~delta3) %>%
- layout(
-   xaxis = list(title = "Effective Sample Size",
-                zeroline = F,
-                hoverformat = '.0f'),
-   yaxis = list(title = "Exaggeration Ratio",
-                range = c(0,10),
-                zeroline = F,
-                hoverformat = '.2f'),
-   legend=list(title=list(text='<b> AMCIE </b>')),
-   hovermode = "x unified"
- )
+plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) %>%
+  layout(
+    xaxis = list(title = "Effective Sample Size",
+                 zeroline = F,
+                 hoverformat = '.0f'),
+    yaxis = list(title = "Exaggeration Ratio",
+                 range = c(0,10),
+                 zeroline = F,
+                 hoverformat = '.2f'),
+    legend=list(title=list(text='<b> AMCE </b>')),
+    hovermode = "x unified"
+  )
 
 ```
