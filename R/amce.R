@@ -32,16 +32,16 @@
 #' @export
 #' @examples
 #' # This gives the minimum required effective sample size (type S, E(type M)):
-#' df = cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
+#' df <- cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
 #'
 #' # For example, for a conjoint with 2 profiles and 4 tasks, n becomes:
 #'
-#' df$n/(2*4)
+#' df$n / (2 * 4)
 #'
-#' #This gives the power (type S, E(type M)):
+#' # This gives the power (type S, E(type M)):
 #' cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 #'
-#' #Generating an interactive plot for type M error:
+#' # Generating an interactive plot for type M error:
 #'
 #' d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
 #'
@@ -59,19 +59,23 @@
 #' df2[] <- lapply(df2, unlist)
 #'
 #' library(plotly)
-#' 
-#' plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) %>%
-#'  layout(
-#'    xaxis = list(title = "Effective Sample Size",
-#'                 zeroline = F,
-#'                 hoverformat = '.0f'),
-#'    yaxis = list(title = "Exaggeration Ratio",
-#'                 range = c(0,10),
-#'                 zeroline = F,
-#'                 hoverformat = '.2f'),
-#'    legend=list(title=list(text='<b> AMCE </b>')),
-#'    hovermode = "x unified"
-#'  )
+#'
+#' plot_ly(df, x = ~n, y = ~exp_typeM, type = "scatter", mode = "lines", linetype = ~amce) %>%
+#'   layout(
+#'     xaxis = list(
+#'       title = "Effective Sample Size",
+#'       zeroline = F,
+#'       hoverformat = ".0f"
+#'     ),
+#'     yaxis = list(
+#'       title = "Exaggeration Ratio",
+#'       range = c(0, 10),
+#'       zeroline = F,
+#'       hoverformat = ".2f"
+#'     ),
+#'     legend = list(title = list(text = "<b> AMCE </b>")),
+#'     hovermode = "x unified"
+#'   )
 #' @section Literature:
 #'
 #' 1. Schuessler, J. and M. Freitag (2020). Power Analysis for Conjoint Experiments.
@@ -81,16 +85,17 @@
 #'    British Journal of Mathematical and Statistical Psychology 72(1), 1–17.
 
 cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
-                        treat.prob = 0.5, n = NULL, sims = 100000){
-
-  if (sum(sapply(list(power,n), is.null)) != 1)
+                        treat.prob = 0.5, n = NULL, sims = 100000) {
+  if (sum(sapply(list(power, n), is.null)) != 1) {
     stop("either 'n' or 'power' must be provided")
-  if (!is.null(alpha) && !is.numeric(alpha) || any(0 > alpha | alpha > 1))
+  }
+  if (!is.null(alpha) && !is.numeric(alpha) || any(0 > alpha | alpha > 1)) {
     stop("'sig.level' must be numeric in [0, 1]")
+  }
 
   lengths <- c(length(amce), length(alpha), length(power), length(levels), length(treat.prob), length(n), length(sims))
   non_null_lengths <- lengths[lengths > 0]
-  
+
   if (length(unique(non_null_lengths)) > 1) {
     stop("All non-NULL input parameters must be of the same length.")
   }
@@ -98,116 +103,107 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
   length_output <- unique(non_null_lengths)
 
   if (is.null(sims)) {
-
     if (is.null(n)) {
+      delta0 <- 0.5 - (amce * treat.prob)
 
-      delta0 = 0.5 - (amce*treat.prob)
-
-      n = (levels/2)/(amce^2) * (qnorm(p = 1- alpha/2) + qnorm(p = power))^2*
+      n <- (levels / 2) / (amce^2) * (qnorm(p = 1 - alpha / 2) + qnorm(p = power))^2 *
         (
-          ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-            ((delta0)*(1 - delta0))/0.5
+          ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+            ((delta0) * (1 - delta0)) / 0.5
         )
 
-      se = (sqrt( (
-        ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-          ((delta0)*(1 - delta0))/0.5
-      ))/sqrt(2*(n/levels)))
+      se <- (sqrt((
+        ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+          ((delta0) * (1 - delta0)) / 0.5
+      )) / sqrt(2 * (n / levels)))
 
-      z=amce/se
+      z <- amce / se
 
-      pow=pnorm(z-qnorm(1-alpha/2)) + pnorm(-z-qnorm(1-alpha/2))
+      pow <- pnorm(z - qnorm(1 - alpha / 2)) + pnorm(-z - qnorm(1 - alpha / 2))
 
-      type_s = pnorm(-z-qnorm(1-alpha/2))/pow
+      type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / pow
 
-      return(data.frame(amce = amce, n=n, type_s=type_s, power = power, alpha = alpha, levels = levels, delta0 = delta0))
+      return(data.frame(amce = amce, n = n, type_s = type_s, power = power, alpha = alpha, levels = levels, delta0 = delta0))
     }
 
     else if (is.null(power)) {
+      delta0 <- 0.5 - (amce * treat.prob)
 
-      delta0 = 0.5 - (amce * treat.prob)
+      se <- (sqrt((
+        ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+          ((delta0) * (1 - delta0)) / 0.5
+      )) / sqrt(2 * (n / levels)))
 
-      se = (sqrt( (
-        ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-          ((delta0)*(1 - delta0))/0.5
-      ))/sqrt(2*(n/levels)))
+      z <- amce / se
 
-      z=amce/se
+      power <- pnorm(z - qnorm(1 - alpha / 2)) + pnorm(-z - qnorm(1 - alpha / 2))
 
-      power=pnorm(z-qnorm(1-alpha/2)) + pnorm(-z-qnorm(1-alpha/2))
+      type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / power
 
-      type_s = pnorm(-z-qnorm(1-alpha/2))/power
-
-      return(data.frame(power=power, type_s=type_s, amce=amce, n=n, alpha = alpha, levels = levels, delta0 = delta0))
+      return(data.frame(power = power, type_s = type_s, amce = amce, n = n, alpha = alpha, levels = levels, delta0 = delta0))
     }
   }
   else if (is.null(n)) {
+    delta0 <- 0.5 - (amce * treat.prob)
 
-    delta0 = 0.5 - (amce * treat.prob)
-
-    n = (levels/2)/(amce^2) * (qnorm(p = 1- alpha/2) + qnorm(p = power))^2*
+    n <- (levels / 2) / (amce^2) * (qnorm(p = 1 - alpha / 2) + qnorm(p = power))^2 *
       (
-        ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-          ((delta0)*(1 - delta0))/0.5
+        ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+          ((delta0) * (1 - delta0)) / 0.5
       )
 
-    se = (sqrt( (
-      ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-        ((delta0)*(1 - delta0))/0.5
-    ))/sqrt(2*(n/levels)))
+    se <- (sqrt((
+      ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+        ((delta0) * (1 - delta0)) / 0.5
+    )) / sqrt(2 * (n / levels)))
 
-    z=amce/se
+    z <- amce / se
 
-    pow=pnorm(z-qnorm(1-alpha/2)) + pnorm(-z-qnorm(1-alpha/2))
+    pow <- pnorm(z - qnorm(1 - alpha / 2)) + pnorm(-z - qnorm(1 - alpha / 2))
 
-    type_s = pnorm(-z-qnorm(1-alpha/2))/pow
-
-    exp_typeM <- vector(mode = "numeric", length = length_output)
-
-    sims <- rep(sims, length_output)
-
-    for (i in seq(1, length_output)) {
-
-    est <-  amce[i] + se[i]*rnorm(sims[i])
-
-    sig <- abs(est) > se[i]*qnorm(1-alpha/2)
-
-    exp_typeM[i] <- abs(mean(abs(est)[sig])/amce[i])
-    }
-
-    return(data.frame(n=n, type_s=type_s, exp_typeM=exp_typeM, amce=amce, power=power, alpha = alpha, levels = levels, delta0 = delta0))
-
-  }
-
-  else if (is.null(power)){
-
-    delta0 = 0.5 - (amce * treat.prob)
-
-    se = (sqrt( (
-      ((delta0 + amce)*(1 - (delta0 + amce)))/0.5 +
-        ((delta0)*(1 - delta0))/0.5
-    ))/sqrt(2*(n/levels)))
-
-    z=amce/se
-
-    power=pnorm(z-qnorm(1-alpha/2)) + pnorm(-z-qnorm(1-alpha/2))
-
-    type_s = pnorm(-z-qnorm(1-alpha/2))/power
+    type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / pow
 
     exp_typeM <- vector(mode = "numeric", length = length_output)
 
     sims <- rep(sims, length_output)
 
     for (i in seq(1, length_output)) {
+      est <- amce[i] + se[i] * rnorm(sims[i])
 
-    est <-  amce[i] + se[i]*rnorm(sims[i])
+      sig <- abs(est) > se[i] * qnorm(1 - alpha / 2)
 
-    sig <- abs(est) > se[i]*qnorm(1-alpha/2)
-
-    exp_typeM[i] <- abs(mean(abs(est)[sig])/amce[i])
+      exp_typeM[i] <- abs(mean(abs(est)[sig]) / amce[i])
     }
 
-    return(data.frame(power=power, type_s=type_s, exp_typeM=exp_typeM,  amce=amce, n=n, alpha = alpha, levels = levels, delta0 = delta0 ))
+    return(data.frame(n = n, type_s = type_s, exp_typeM = exp_typeM, amce = amce, power = power, alpha = alpha, levels = levels, delta0 = delta0))
   }
 
+  else if (is.null(power)) {
+    delta0 <- 0.5 - (amce * treat.prob)
+
+    se <- (sqrt((
+      ((delta0 + amce) * (1 - (delta0 + amce))) / 0.5 +
+        ((delta0) * (1 - delta0)) / 0.5
+    )) / sqrt(2 * (n / levels)))
+
+    z <- amce / se
+
+    power <- pnorm(z - qnorm(1 - alpha / 2)) + pnorm(-z - qnorm(1 - alpha / 2))
+
+    type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / power
+
+    exp_typeM <- vector(mode = "numeric", length = length_output)
+
+    sims <- rep(sims, length_output)
+
+    for (i in seq(1, length_output)) {
+      est <- amce[i] + se[i] * rnorm(sims[i])
+
+      sig <- abs(est) > se[i] * qnorm(1 - alpha / 2)
+
+      exp_typeM[i] <- abs(mean(abs(est)[sig]) / amce[i])
+    }
+
+    return(data.frame(power = power, type_s = type_s, exp_typeM = exp_typeM, amce = amce, n = n, alpha = alpha, levels = levels, delta0 = delta0))
+  }
 }
