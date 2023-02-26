@@ -42,13 +42,15 @@ df$n/(2*4)
 cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 
 #Generating an interactive plot for type M error:
+
 d <- expand.grid(
     amce = c(0.01, 0.02, 0.03, 0.05), 
-    n = seq(from = 100, to = 50000, 
-    length.out = 1000), 
-    alpha = 0.05, levels = 2,
-    treat.prob = 0.5, 
-    sims = 100000)
+    n = seq(from = 100, to = 50000, length.out = 1000), # power if minimum required effective sample size is of interest 
+    alpha = 0.05, 
+    levels = 2,
+    treat.prob = 0.5,
+    sims = 10000 # set to 0 if you want to plot something else than Type M error
+    )
 
 df <- list2DF(do.call(cjpowr_amce, d))
 

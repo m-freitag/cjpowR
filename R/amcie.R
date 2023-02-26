@@ -11,8 +11,8 @@
 #' resource constraints. The number of attributes does not affect power.
 #'
 #' To calculate power or minimum sample size for differences in conditional AMCEs, given the known or estimated marginal distribution of the pre-treatment co-variate,
-#' the argument "treat.prob" can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
-#' binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following list of probabilities: list(0.1,0.1,0.4,0.4). Details on the formula can be found in Schuessler/Freitag 2020.
+#' the arguments p00, p10, p01, p11 can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
+#' binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following probabilities: p00 = 0.1, p10 = 0.1, p01 = 0.4, p11 = 0.4. Details on the formula can be found in Schuessler/Freitag 2020.
 #' Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lower power (see the technical Appendix of the paper).
 #'
 #' Passing the effective sample size to the function gives power.
@@ -30,7 +30,10 @@
 #' @param n effective sample size, default is NULL.
 #' @param levels1 the number of levels of the first treatment. Default is 2.
 #' @param levels2 the number of levels of the second treatment/subgroup variable. Default is 2.
-#' @param treat.prob List of treatment probabilities. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25. Thus, the default is list(0.25,0.25,0.25,0.25)
+#' @param p00 Treatment probability p00. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.
+#' @param p10 Treatment probability p10. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.
+#' @param p01 Treatment probability p01. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.
+#' @param p11 Treatment probability p11. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.
 #' @param sims number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.
 #' @keywords conjoint, power analysis, AMCE
 #' @export
@@ -40,12 +43,20 @@
 #'
 #' #Generating an interactive plot for type M error:
 #'
-#' cjpowr_amcie_vec <- Vectorize(cjpowr_amcie)
-#' d <- expand.grid(delta3 = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
-#' df <- t(cjpowr_amcie_vec(delta3 = d$delta3, n = d$n, sims = 10000, levels1 = 3, levels2=4, alpha = 0.05))
-#' df <- data.frame(df)
-#' df[] <- lapply(df, unlist)
-
+#' d <- expand.grid(
+#'     delta3 = c(0.01, 0.02, 0.03, 0.05), 
+#'     n = seq(from = 100, to = 50000, length.out = 1000),
+#'     delta0 = 0.5, 
+#'     delta1 = 0,
+#'     alpha = 0.05,
+#'     levels1 = 3, 
+#'     levels2 = 4,
+#'     p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25,
+#'     sims = 100000 #set to 0 if Type-M-Error is not of interest
+#'     )
+#' 
+#' df <- list2DF(do.call(cjpowr_amcie, d))
+#' 
 #' plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~delta3) %>%
 #'  layout(
 #'    xaxis = list(title = "Effective Sample Size",
@@ -69,7 +80,7 @@
 cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
                          delta3, alpha = 0.05, power = NULL, n = NULL,
                          levels1 = 2, levels2 = 2,
-                         treat.prob = list(p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25),
+                         p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25,
                          sims = 100000) {
 
   if (sum(sapply(list(power, n), is.null)) != 1) {
@@ -79,27 +90,31 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
     stop("'sig.level' must be numeric in [0, 1]")
   }
 
-  delta2 <- -((-delta3 * treat.prob[[3]]) / (treat.prob[[3]] + treat.prob[[4]]))
+  delta2 <- -((-delta3 * p01) / (p01 + p11))
 
-  if (length(treat.prob) < 4) stop("length(treat.prob) < 4. Provide all of p00, p10, p01, p11.")
+  if (is.null(p00) | is.null(p10) | is.null(p01) | is.null(p11)) stop("Provide all of p00, p10, p01, p11.")
 
-  if (sum(treat.prob[[1]] + treat.prob[[2]] + treat.prob[[3]] + treat.prob[[4]]) != 1) stop("Probabilities must sum to 1.")
+  if (any((p00 + p10 + p01 + p11) != 1)) stop("Probabilities must sum to 1.")
 
-  if (treat.prob[[1]] != treat.prob[[2]]) stop("p00 and p10 must be equal.")
+  if (any(p00 != p10)) stop("p00 and p10 must be equal.")
 
-  if (treat.prob[[3]] != treat.prob[[4]]) stop("p01 and p11 must be equal.")
+  if (any(p01 != p11)) stop("p01 and p11 must be equal.")
 
-  if (!is.list(treat.prob)) stop("Please provide a list of treatment probabilities. For readability you can name the elements as done in the defaults.")
+  if (any(p00 < p01)) warning("Note: More probability mass on p01 and p11 than on p00 and p10. This implies output is not a worst-case bound (but only marginally so). To obtain worst-case bounds, shift more mass to p00 and p10.")
 
-  if (treat.prob[[1]] < treat.prob[[3]]) warning("More probability mass on p01 and p11 than on p00 and p10. This implies output is not a worst-case bound (but only marginally so). To obtain worst-case bounds, shift more mass to p00 and p10.")
+  lengths <- c(length(delta0), length(delta1), length(delta3), length(alpha), length(power), length(levels1), length(levels2), length(p00), length(p10), length(p01), length(p11), length(n), length(sims))
+  
+  non_null_lengths <- lengths[lengths > 0]
 
-  if (is.null(sims)) {
+  if (length(unique(non_null_lengths)) > 1) {
+    stop("All non-NULL input parameters must be of the same length.")
+  }
+
+  length_output <- unique(non_null_lengths)
+
+  if (is.null(sims) | any(sims == 0) == TRUE) {
 
     if (is.null(n)) {
-
-      if (all(sapply(list(length(delta0), length(delta1), length(delta3), length(alpha), length(power), length(levels1), length(levels2)), function(x) x == 1)) == FALSE) {
-        stop("Please provide scalar values or apply a functional.")
-      }
 
       A <- ((delta0) * (1 - delta0))
       B <- ((delta0 + delta1) * (1 - (delta0 + delta1)))
@@ -107,16 +122,16 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
       D <- ((delta0 + delta1 + delta2 + delta3) * (1 - (delta0 + delta1 + delta2 + delta3)))
 
       n <- (levels1 * levels2 / 4) / (delta3^2) * (qnorm(p = 1 - alpha / 2) + qnorm(p = power))^2 *
-        (A / treat.prob[[1]] +
-          B / treat.prob[[2]] +
-          C / treat.prob[[3]] +
-          D / treat.prob[[4]])
+        (A / p00 +
+          B / p10 +
+          C / p01 +
+          D / p11)
 
 
-      se <- (sqrt(A / treat.prob[[1]] +
-        B / treat.prob[[2]] +
-        C / treat.prob[[3]] +
-        D / treat.prob[[4]])) / (sqrt(4 * (n / (levels1 * levels2))))
+      se <- (sqrt(A / p00 +
+        B / p10 +
+        C / p01 +
+        D / p11)) / (sqrt(4 * (n / (levels1 * levels2))))
 
       z <- delta3 / se
 
@@ -129,19 +144,15 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
     } 
     else if (is.null(power)) {
 
-      if (all(sapply(list(length(delta0), length(delta1), length(delta3), length(alpha), length(n), length(levels1), length(levels2)), function(x) x == 1)) == FALSE) {
-        stop("Please provide scalar values or apply a functional.")
-      }
-
       A <- ((delta0) * (1 - delta0))
       B <- ((delta0 + delta1) * (1 - (delta0 + delta1)))
       C <- ((delta0 + delta1 + delta2) * (1 - (delta0 + delta1 + delta2)))
       D <- ((delta0 + delta1 + delta2 + delta3) * (1 - (delta0 + delta1 + delta2 + delta3)))
 
-      se <- (sqrt(A / treat.prob[[1]] +
-        B / treat.prob[[2]] +
-        C / treat.prob[[3]] +
-        D / treat.prob[[4]])) / (sqrt(4 * (n / (levels1 * levels2))))
+      se <- (sqrt(A / p00 +
+        B / p10 +
+        C / p01 +
+        D / p11)) / (sqrt(4 * (n / (levels1 * levels2))))
 
       z <- delta3 / se
 
@@ -155,26 +166,22 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
   }
   else if (is.null(n)) {
 
-    if (all(sapply(list(length(delta0), length(delta1), length(delta3), length(alpha), length(power), length(levels1), length(levels2)), function(x) x == 1)) == FALSE) {
-      stop("Please provide scalar values or apply a functional.")
-    }
-
     A <- ((delta0) * (1 - delta0))
     B <- ((delta0 + delta1) * (1 - (delta0 + delta1)))
     C <- ((delta0 + delta1 + delta2) * (1 - (delta0 + delta1 + delta2)))
     D <- ((delta0 + delta1 + delta2 + delta3) * (1 - (delta0 + delta1 + delta2 + delta3)))
 
     n <- (levels1 * levels2 / 4) / (delta3^2) * (qnorm(p = 1 - alpha / 2) + qnorm(p = power))^2 *
-      (A / treat.prob[[1]] +
-        B / treat.prob[[2]] +
-        C / treat.prob[[3]] +
-        D / treat.prob[[4]])
+      (A / p00 +
+        B / p10 +
+        C / p01 +
+        D / p11)
 
 
-    se <- (sqrt(A / treat.prob[[1]] +
-      B / treat.prob[[2]] +
-      C / treat.prob[[3]] +
-      D / treat.prob[[4]])) / (sqrt(4 * (n / (levels1 * levels2))))
+    se <- (sqrt(A / p00 +
+      B / p10 +
+      C / p01 +
+      D / p11)) / (sqrt(4 * (n / (levels1 * levels2))))
 
     z <- delta3 / se
 
@@ -182,31 +189,30 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
 
     type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / pow
 
-    est <- delta3 + se * rnorm(sims)
+    exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sig <- abs(est) > se * qnorm(1 - alpha / 2)
+    for (i in seq(1, length_output)) {
+      est <- delta3[i] + se[i] * rnorm(sims[i])
 
-    exp_typeM <- abs(mean(abs(est)[sig]) / delta3)
+      sig <- abs(est) > se[i] * qnorm(1 - alpha[i] / 2)
 
+      exp_typeM[i] <- abs(mean(abs(est)[sig]) / delta3[i])
+    }
 
     return(data.frame(n = n, type_s, exp_typeM, power = power, delta3 = delta3, delta2 = delta2, delta1 = delta1, alpha = alpha, levels1 = levels1, levels2 = levels2, delta0 = delta0))
   }
 
   else if (is.null(power)) {
 
-    if (all(sapply(list(length(delta0), length(delta1), length(delta3), length(alpha), length(n), length(levels1), length(levels2)), function(x) x == 1)) == FALSE) {
-      stop("Please provide scalar values or apply a functional.")
-    }
-
     A <- ((delta0) * (1 - delta0))
     B <- ((delta0 + delta1) * (1 - (delta0 + delta1)))
     C <- ((delta0 + delta1 + delta2) * (1 - (delta0 + delta1 + delta2)))
     D <- ((delta0 + delta1 + delta2 + delta3) * (1 - (delta0 + delta1 + delta2 + delta3)))
 
-    se <- (sqrt(A / treat.prob[[1]] +
-      B / treat.prob[[2]] +
-      C / treat.prob[[3]] +
-      D / treat.prob[[4]])) / (sqrt(4 * (n / (levels1 * levels2))))
+    se <- (sqrt(A / p00 +
+      B / p10 +
+      C / p01 +
+      D / p11)) / (sqrt(4 * (n / (levels1 * levels2))))
 
     z <- delta3 / se
 
@@ -214,11 +220,15 @@ cjpowr_amcie <- function(delta0 = 0.5, delta1 = 0,
 
     type_s <- pnorm(-z - qnorm(1 - alpha / 2)) / power
 
-    est <- delta3 + se * rnorm(sims)
+    exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sig <- abs(est) > se * qnorm(1 - alpha / 2)
+    for (i in seq(1, length_output)) {
+      est <- delta3[i] + se[i] * rnorm(sims[i])
 
-    exp_typeM <- abs(mean(abs(est)[sig]) / delta3)
+      sig <- abs(est) > se[i] * qnorm(1 - alpha[i] / 2)
+
+      exp_typeM[i] <- abs(mean(abs(est)[sig]) / delta3[i])
+    }
 
 
     return(data.frame(power = power, type_s, exp_typeM, n = n, delta3 = delta3, delta2 = delta2, delta1 = delta1, alpha = alpha, levels1 = levels1, levels2 = levels2, delta0 = delta0))

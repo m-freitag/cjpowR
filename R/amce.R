@@ -24,7 +24,7 @@
 #' @param levels the number of levels of the treatment.
 #' @param n effective sample size, default is NULL.
 #' @param treat.prob default is 0.5.
-#' @param sims number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.
+#' @param sims number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL or, E(type M) is not computed (much faster).
 #' @keywords conjoint, power analysis, AMCE
 #' @export
 #' @export
@@ -45,11 +45,11 @@
 #'
 #' d <- expand.grid(
 #'     amce = c(0.01, 0.02, 0.03, 0.05), 
-#'     n = seq(from = 100, to = 50000, 
-#'     length.out = 1000), 
-#'     alpha = 0.05, levels = 2,
-#'     treat.prob = 0.5, 
-#'     sims = 100000)
+#'     n = seq(from = 100, to = 50000, length.out = 1000), 
+#'     alpha = 0.05, 
+#'     levels = 2,
+#'     treat.prob = 0.5,
+#'     sims = 10000) #set to 0 if you want to make an interactive plot for something other than Type M error
 #'
 #' df <- list2DF(do.call(cjpowr_amce, d))
 #'
@@ -97,7 +97,7 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
   length_output <- unique(non_null_lengths)
 
-  if (is.null(sims)) {
+  if (is.null(sims) | any(sims == 0) == TRUE) {
     if (is.null(n)) {
       delta0 <- 0.5 - (amce * treat.prob)
 
@@ -160,12 +160,10 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sims <- rep(sims, length_output)
-
     for (i in seq(1, length_output)) {
       est <- amce[i] + se[i] * rnorm(sims[i])
 
-      sig <- abs(est) > se[i] * qnorm(1 - alpha / 2)
+      sig <- abs(est) > se[i] * qnorm(1 - alpha[i] / 2)
 
       exp_typeM[i] <- abs(mean(abs(est)[sig]) / amce[i])
     }
@@ -189,12 +187,10 @@ cjpowr_amce <- function(amce, alpha = 0.05, power = NULL, levels = 2,
 
     exp_typeM <- vector(mode = "numeric", length = length_output)
 
-    sims <- rep(sims, length_output)
-
     for (i in seq(1, length_output)) {
       est <- amce[i] + se[i] * rnorm(sims[i])
 
-      sig <- abs(est) > se[i] * qnorm(1 - alpha / 2)
+      sig <- abs(est) > se[i] * qnorm(1 - alpha[i] / 2)
 
       exp_typeM[i] <- abs(mean(abs(est)[sig]) / amce[i])
     }
