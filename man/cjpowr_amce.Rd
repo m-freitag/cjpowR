@@ -27,7 +27,7 @@ cjpowr_amce(
 
 \item{n}{effective sample size, default is NULL.}
 
-\item{sims}{number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.}
+\item{sims}{number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL or, E(type M) is not computed (much faster).}
 }
 \description{
 Based on Schuessler/Freitag (2020), this function calculates the minimum effective
@@ -62,46 +62,45 @@ users are referred to \link[cjpowR]{cjpowr_amcie}.
 
 \examples{
 # This gives the minimum required effective sample size (type S, E(type M)):
-df = cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
+df <- cjpowr_amce(amce = 0.05, power = 0.8, levels = 5)
 
 # For example, for a conjoint with 2 profiles and 4 tasks, n becomes:
 
-df$n/(2*4)
+df$n / (2 * 4)
 
-#This gives the power (type S, E(type M)):
+# This gives the power (type S, E(type M)):
 cjpowr_amce(amce = 0.05, n = 7829.258, levels = 5)
 
-#Generating an interactive plot for type M error:
+# Generating an interactive plot for type M error:
 
-d <- expand.grid(amce = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
+d <- expand.grid(
+    amce = c(0.01, 0.02, 0.03, 0.05), 
+    n = seq(from = 100, to = 50000, length.out = 1000), 
+    alpha = 0.05, 
+    levels = 2,
+    treat.prob = 0.5,
+    sims = 10000) #set to 0 if you want to make an interactive plot for something other than Type M error
 
-# Purrr Style:
-library(purrr)
-set.seed(123)
-df <- pmap_df(d, function(amce, n) cjpowr_amce(amce = amce, n = n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
-
-# Base R:
-set.seed(123)
-cjpowr_amce_vec <- Vectorize(cjpowr_amce)
-df2 <- t(cjpowr_amce_vec(amce = d$amce, n = d$n, sims = 1000, levels = 5, alpha = 0.05, treat.prob = 0.5))
-
-df2 <- data.frame(df2)
-df2[] <- lapply(df2, unlist)
+df <- list2DF(do.call(cjpowr_amce, d))
 
 library(plotly)
 
-plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~amce) \%>\%
- layout(
-   xaxis = list(title = "Effective Sample Size",
-                zeroline = F,
-                hoverformat = '.0f'),
-   yaxis = list(title = "Exaggeration Ratio",
-                range = c(0,10),
-                zeroline = F,
-                hoverformat = '.2f'),
-   legend=list(title=list(text='<b> AMCE </b>')),
-   hovermode = "x unified"
- )
+plot_ly(df, x = ~n, y = ~exp_typeM, type = "scatter", mode = "lines", linetype = ~amce) \%>\%
+  layout(
+    xaxis = list(
+      title = "Effective Sample Size",
+      zeroline = F,
+      hoverformat = ".0f"
+    ),
+    yaxis = list(
+      title = "Exaggeration Ratio",
+      range = c(0, 10),
+      zeroline = F,
+      hoverformat = ".2f"
+    ),
+    legend = list(title = list(text = "<b> AMCE </b>")),
+    hovermode = "x unified"
+  )
 }
 \keyword{AMCE}
 \keyword{analysis,}

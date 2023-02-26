@@ -13,7 +13,10 @@ cjpowr_amcie(
   n = NULL,
   levels1 = 2,
   levels2 = 2,
-  treat.prob = list(p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25),
+  p00 = 0.25,
+  p10 = 0.25,
+  p01 = 0.25,
+  p11 = 0.25,
   sims = 1e+05
 )
 }
@@ -34,7 +37,13 @@ cjpowr_amcie(
 
 \item{levels2}{the number of levels of the second treatment/subgroup variable. Default is 2.}
 
-\item{treat.prob}{List of treatment probabilities. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25. Thus, the default is list(0.25,0.25,0.25,0.25)}
+\item{p00}{Treatment probability p00. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.}
+
+\item{p10}{Treatment probability p10. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.}
+
+\item{p01}{Treatment probability p01. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.}
+
+\item{p11}{Treatment probability p11. If the interest is in causal interaction and uniform randomization is employed, then p00=p10=p01=p11= 0.25.}
 
 \item{sims}{number of simulation runs to compute the expected type M error ("exaggeration ratio"), default 100k. If NULL, E(type M) is not computed.}
 }
@@ -51,9 +60,9 @@ the number of profiles times the number of taks to optimize the design vis-a-vis
 resource constraints. The number of attributes does not affect power.
 
 To calculate power or minimum sample size for differences in conditional AMCEs, given the known or estimated marginal distribution of the pre-treatment co-variate,
-the argument "treat.prob" can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
-binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following list of probabilities: list(0.1,0.1,0.4,0.4). Details on the formula can be found in Schuessler/Freitag 2020.
-Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lowe power (see the technical Appendix of the paper).
+the arguments p00, p10, p01, p11 can easily be manipulated. For instance, interacting a uniformly randomized treatment with a
+binary co-variate with e.g. P_covariate(W_ijk = 0) = 4/5 yields the following probabilities: p00 = 0.1, p10 = 0.1, p01 = 0.4, p11 = 0.4. Details on the formula can be found in Schuessler/Freitag 2020.
+Shifting more probability mass on p01 and p11 (as in this example) results in marginally higher MES / lower power (see the technical Appendix of the paper).
 
 Passing the effective sample size to the function gives power.
 Type S (incorrect sign)and the expected type M errors (exaggeration ratio) are also computed (Lu/Qui/Deng 2019). If your study is
@@ -78,11 +87,20 @@ cjpowr_amcie(delta3 = 0.05, levels1=3, levels2=3, power=0.8)
 
 #Generating an interactive plot for type M error:
 
-cjpowr_amcie_vec <- Vectorize(cjpowr_amcie)
-d <- expand.grid(delta3 = c(0.01, 0.02, 0.03, 0.05), n = seq(from = 100, to = 50000, length.out = 1000))
-df <- t(cjpowr_amcie_vec(delta3 = d$delta3, n = d$n, sims = 10000, levels1 = 3, levels2=4, alpha = 0.05))
-df <- data.frame(df)
-df[] <- lapply(df, unlist)
+d <- expand.grid(
+    delta3 = c(0.01, 0.02, 0.03, 0.05), 
+    n = seq(from = 100, to = 50000, length.out = 1000),
+    delta0 = 0.5, 
+    delta1 = 0,
+    alpha = 0.05,
+    levels1 = 3, 
+    levels2 = 4,
+    p00 = 0.25, p10 = 0.25, p01 = 0.25, p11 = 0.25,
+    sims = 100000 #set to 0 if Type-M-Error is not of interest
+    )
+
+df <- list2DF(do.call(cjpowr_amcie, d))
+
 plot_ly(df, x = ~n, y = ~exp_typeM, type = 'scatter', mode = 'lines', linetype = ~delta3) \%>\%
  layout(
    xaxis = list(title = "Effective Sample Size",
