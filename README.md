@@ -6,6 +6,9 @@
 Based on [Schuessler/Freitag (2020)](https://osf.io/preprints/socarxiv/9yuhp/), this R package provides simple
 functions to calculate power, minimum required sample size, Type S and the expected Type M error for forced-choice conjoint experiments.
 
+✨A shiny app GUI is available in a beta version: [m-freitag.github.io/cjpowR_shiny/](m-freitag.github.io/cjpowR_shiny/)✨
+
+
 #### Cite as:
 
 Freitag, Markus and Julian Schuessler (2020). “cjpowR – A Priori Power Analyses for Conjoint Experiments,” R Package. 
